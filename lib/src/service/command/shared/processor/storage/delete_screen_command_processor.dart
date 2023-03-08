@@ -55,6 +55,8 @@ class DeleteScreenCommandProcessor implements ICommandProcessor<DeleteScreenComm
     }
     IDataService().clearData(command.screenName);
 
+    IUiService().removeScreenName(command.screenName);
+
     return [];
   }
 }

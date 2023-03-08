@@ -77,6 +77,13 @@ abstract class IUiService {
     }
   }
 
+  String? addScreenName({required String pLongScreenName, required String pShortScreenName});
+
+  void removeScreenName(String pScreenName);
+
+  /// If known, returns an entry with a screen mapping containing <ClassName, ShortName>.
+  MapEntry<String, String>? getScreenNameMapping(String pScreenName);
+
   MenuItemModel? getMenuItem(String pScreenName);
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
