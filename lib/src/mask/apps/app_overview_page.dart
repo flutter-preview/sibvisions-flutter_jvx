@@ -34,6 +34,7 @@ import '../../util/image/image_loader.dart';
 import '../../util/jvx_colors.dart';
 import '../../util/widgets/jvx_scanner.dart';
 import '../camera/qr_parser.dart';
+import '../test/tts_page.dart';
 import 'app_edit_dialog.dart';
 import 'app_item.dart';
 import 'select_item.dart';
@@ -405,6 +406,14 @@ class _AppOverviewPageState extends State<AppOverviewPage> {
                       case 2:
                         IUiService().routeToSettings();
                         break;
+                      case 3:
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return const TtsPage();
+                          },
+                        );
+                        break;
                     }
                   },
                   itemBuilder: (context) => [
@@ -431,6 +440,14 @@ class _AppOverviewPageState extends State<AppOverviewPage> {
                       child: ListTile(
                         leading: const FaIcon(FontAwesomeIcons.gear),
                         title: Text(FlutterUI.translateLocal("Settings")),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 3,
+                      child: ListTile(
+                        leading: const FaIcon(FontAwesomeIcons.exclamation),
+                        title: Text(FlutterUI.translateLocal("Experimental")),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
