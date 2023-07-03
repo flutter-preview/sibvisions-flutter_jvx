@@ -23,6 +23,7 @@ import '../../config/app_config.dart';
 import '../../flutter_ui.dart';
 import '../../model/command/api/exit_command.dart';
 import '../../model/command/api/startup_command.dart';
+import '../../util/parse_util.dart';
 import '../api/i_api_service.dart';
 import '../api/shared/repository/offline_api_repository.dart';
 import '../api/shared/repository/online_api_repository.dart';
@@ -42,6 +43,9 @@ class AppService {
 
   bool get startedManually => _startedManually;
   Uri? savedReturnUri;
+
+  bool beforeFirstStart = true;
+  Uri? calculatedBaseUrl;
 
   /// Returns the singleton instance.
   factory AppService() => services<AppService>();
@@ -139,6 +143,25 @@ class AppService {
       }
       if (defaultApp?.isStartable ?? false) {
         startApp(appId: defaultApp!.id, autostart: true);
+      } else if (kIsWeb && beforeFirstStart) {
+        // Try to extract the first path segment if there are 2 segments.
+        // Used to add the app routing from the url.
+        if (Uri.base.pathSegments.length == 3) {
+          calculatedBaseUrl = Uri(
+            scheme: Uri.base.scheme,
+            host: Uri.base.host,
+            port: Uri.base.port,
+            path: Uri.base.pathSegments[0] + ParseUtil.urlSuffix,
+          );
+        } else {
+          calculatedBaseUrl = Uri(
+            scheme: Uri.base.scheme,
+            host: Uri.base.host,
+            port: Uri.base.port,
+            path: ParseUtil.urlSuffix,
+          );
+        }
+        startApp(appId: null);
       }
     });
   }
@@ -156,14 +179,21 @@ class AppService {
   Future<void> startApp({String? appId, bool? autostart}) {
     exitFuture.value = null;
     return startupFuture.value = _startApp(appId: appId, autostart: autostart)
-        .catchError(FlutterUI.createErrorHandler("Failed to send startup"));
+        .catchError(FlutterUI.createErrorHandler("Failed to send startup"))
+        .whenComplete(() {
+      if (beforeFirstStart) {
+        beforeFirstStart = false;
+      }
+    });
   }
 
   Future<void> _startApp({String? appId, bool? autostart}) async {
     if (appId == null && IConfigService().currentApp.value == null) {
-      FlutterUI.log.e("Called 'startApp' without an appId or a currentApp");
-      await IUiService().routeToAppOverview();
-      return;
+      if (calculatedBaseUrl == null || !beforeFirstStart) {
+        FlutterUI.log.e("Called 'startApp' without an appId or a currentApp");
+        await IUiService().routeToAppOverview();
+        return;
+      }
     }
 
     await _stopApp(false);
@@ -187,9 +217,20 @@ class AppService {
 
     if (!IConfigService().offline.value) {
       // Send startup to server
-      await ICommandService().sendCommand(StartupCommand(
+      await ICommandService()
+          .sendCommand(StartupCommand(
         reason: "InitApp",
-      ));
+        calculatedBaseUrl: calculatedBaseUrl,
+      ))
+          .catchError((e, stack) {
+        // If the startup with the calculated base url failed, return gracefully to overview.
+        if (beforeFirstStart && calculatedBaseUrl != null) {
+          IUiService().routeToAppOverview();
+          AppService().startupFuture.value = null;
+        }
+        Error.throwWithStackTrace(e, stack);
+      });
+      // In case of a flaky startup (e.g. using calculatedBaseUrl) [SaveApplicationMetaDataCommand] handles app saving.
     } else {
       IUiService().routeToMenu(pReplaceRoute: true);
     }

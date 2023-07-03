@@ -38,10 +38,10 @@ class StartupCommandProcessor implements ICommandProcessor<StartupCommand> {
     }
 
     ApiStartupRequest startupRequest = ApiStartupRequest(
-      baseUrl: IConfigService().baseUrl.value!.toString(),
+      baseUrl: command.calculatedBaseUrl?.toString() ?? IConfigService().baseUrl.value!.toString(),
       requestUri: kIsWeb ? Uri.base.toString() : null,
       appMode: "full",
-      applicationName: IConfigService().appName.value!,
+      applicationName: IConfigService().appName.value,
       authKey: IConfigService().authKey.value,
       screenHeight: IConfigService().getPhoneSize()?.height.toInt(),
       screenWidth: IConfigService().getPhoneSize()?.width.toInt(),

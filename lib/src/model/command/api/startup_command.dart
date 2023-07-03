@@ -33,6 +33,8 @@ class StartupCommand extends ApiCommand {
   /// This can be used to override the default values from the config.
   final String? password;
 
+  final Uri? calculatedBaseUrl;
+
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Initialization
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,6 +42,7 @@ class StartupCommand extends ApiCommand {
   StartupCommand({
     this.username,
     this.password,
+    this.calculatedBaseUrl,
     super.showLoading,
     required super.reason,
   }) {
